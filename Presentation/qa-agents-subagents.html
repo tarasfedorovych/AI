@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>QA Agents &amp; Subagents Workshop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --t-title: 88px; --t-sub: 44px; --t-body: 34px; --t-small: 28px; --t-mono: 24px; --t-num: 150px;
+    --pad-x: 100px; --pad-top: 76px; --pad-bottom: 80px; --gap-title: 44px; --gap-item: 28px;
+    --paper: #f2f2f3; --ink: #1d1f20;
+    --steel: #5980a6; --deep: #1d2d3d;
+    --mid: #416180; --tint: #749dc4;
+    --pale: #b5d9fd; --sky: #94bce3;
+    --sky-2: #b5d9fd; --sky-3: #d6ebff;
+    --line: #b7b7ba; --muted: #5d5d60;
+    --dim: #424244;
+    --hd: 'Barlow Condensed', sans-serif; --bd: Barlow, sans-serif; --mo: 'IBM Plex Mono', monospace;
+    --panel: #24384d; --line-d: rgba(255,255,255,0.14); --muted-d: #9db2c6; --dim-d: #c3d4e3;
+    --amber: #e3b34d; --coral: #e2896a; --mint: #6fcf97; --violet: #b48ee0;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #071229; }
+
+  #app { position: fixed; inset: 0; background: #071229; overflow: hidden; }
+  #stage-wrap { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+  #stage { position: relative; width: 1920px; height: 1080px; flex: none; transform-origin: center center; }
+
+  .slide {
+    position: absolute; inset: 0; width: 1920px; height: 1080px; overflow: hidden;
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transform: translateX(24px);
+    transition: opacity .28s ease, transform .28s ease, visibility 0s linear .28s;
+  }
+  .slide.is-active {
+    opacity: 1; visibility: visible; pointer-events: auto; transform: translateX(0);
+    transition: opacity .28s ease, transform .28s ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .slide { transition: opacity .01s linear, visibility 0s linear; transform: none; }
+    .slide.is-active { transition: opacity .01s linear; }
+  }
+
+  .nav-btn {
+    position: fixed; top: 50%; transform: translateY(-50%);
+    width: 52px; height: 52px; border-radius: 50%; padding: 0;
+    background: var(--panel); border: 1px solid var(--line-d);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--muted-d); z-index: 20;
+    transition: background .15s ease, color .15s ease, opacity .15s ease, border-color .15s ease;
+  }
+  .nav-btn:hover:not(:disabled) { background: var(--mid); color: var(--paper); border-color: var(--sky); }
+  .nav-btn:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
+  .nav-btn:disabled { opacity: .25; cursor: default; }
+  #prev-btn { left: 26px; }
+  #next-btn { right: 26px; }
+
+  #dots { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); display: flex; gap: 9px; z-index: 20; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--panel); border: 1px solid var(--line-d); padding: 0; cursor: pointer; transition: background .15s ease, transform .15s ease; }
+  .dot:hover { background: var(--muted-d); }
+  .dot.is-active { background: var(--sky); transform: scale(1.3); border-color: transparent; }
+  .dot:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
+
+  #hint {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    font-family: var(--mo); font-size: 12px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted-d); z-index: 20; pointer-events: none; opacity: 0; transition: opacity .4s ease;
+  }
+  #hint.is-shown { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="stage-wrap">
+    <div id="stage">
+
+      <section class="slide is-active" data-label="Title" data-screen-label="01" style="background:var(--deep);color:var(--paper);font-family:var(--bd);display:grid;grid-template-columns:1fr 1fr">
+        <div style="display:flex;flex-direction:column;justify-content:space-between;padding:var(--pad-top) 80px var(--pad-bottom) var(--pad-x)">
+          <span style="font-family:var(--mo);font-size:var(--t-mono);letter-spacing:0.16em;color:var(--sky)">WORKSHOP &middot; SEPT 2026</span>
+          <div>
+            <h1 style="font-family:var(--hd);font-weight:600;font-size:124px;line-height:0.94;letter-spacing:-0.02em;margin:0">QA Agents</h1>
+            <p style="font-family:var(--hd);font-size:60px;line-height:1.05;margin:16px 0 0;color:var(--sky)">&amp; Subagents Workshop</p>
+          </div>
+          <span style="font-size:30px;color:var(--sky-3)">Senior QA Engineer<br>Taras Fedorovych</span>
+        </div>
+      </section>
+
+      <section class="slide" data-label="Core Definition of an AI Agent" data-screen-label="02" style="background:var(--deep);color:var(--paper);font-family:var(--bd);display:flex;flex-direction:column;padding:var(--pad-top) var(--pad-x) var(--pad-bottom)">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mo);font-size:var(--t-mono);letter-spacing:0.12em;text-transform:uppercase;color:var(--muted-d)"><span>Concepts &middot; AI agents</span><span>02</span></div>
+        <h2 style="font-family:var(--hd);font-weight:600;font-size:var(--t-title);line-height:1;margin:var(--gap-title) 0 0">What is an AI agent?</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--line-d);margin-top:34px;flex:1">
+          <div style="background:var(--panel);padding:36px 40px;display:flex;flex-direction:column">
+            <div style="font-family:var(--mo);font-size:var(--t-mono);letter-spacing:0.1em;color:var(--sky)">THE 1-SENTENCE DEFINITION</div>
+            <p style="font-family:var(--hd);font-size:46px;font-weight:600;line-height:1.15;margin:26px 0 0">A language model that can use tools and runs in a continuous loop until it finishes a job.</p>
+            <div style="margin-top:auto;border-top:1px solid var(--line-d);padding-top:18px;font-size:17px;color:var(--muted-d);line-height:1.4">Everything else — planning, memory, tool use — is implementation detail on top of this.</div>
+          </div>
+          <div style="background:var(--panel);padding:36px 40px;display:flex;flex-direction:column">
+            <div style="font-family:var(--mo);font-size:var(--t-mono);letter-spacing:0.1em;color:var(--amber)">DEMYSTIFYING THE HYPE</div>
+            <div style="display:flex;flex-direction:column;gap:18px;margin-top:26px;font-size:22px;line-height:1.45;color:var(--dim-d)">
+              <span>No magical reasoning brain. No secret sauce inside the model that "decides" to act.</span>
+              <span>Under the hood it follows a practical, structured process — predict, act, observe, repeat.</span>
+            </div>
+            <div style="margin-top:auto;border-top:1px solid var(--line-d);padding-top:18px;font-size:17px;color:var(--muted-d);line-height:1.4">If you can name the loop, you can debug it — that's the point of this deck.</div>
+          </div>
+        </div>
+        <p style="font-family:var(--hd);font-size:var(--t-sub);margin:28px 0 0;font-weight:600">Not magic <span style="color:var(--sky)">&mdash; a mechanism you can inspect and design</span></p>
+      </section>
+
+      <section class="slide" data-label="Chatbot vs. AI Agent" data-screen-label="03" style="background:var(--deep);color:var(--paper);font-family:var(--bd);display:flex;flex-direction:column;padding:var(--pad-top) var(--pad-x) var(--pad-bottom)">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mo);font-size:var(--t-mono);letter-spacing:0.12em;text-transform:uppercase;color:var(--muted-d)"><span>Concepts &middot; AI agents</span><span>03</span></div>
+        <h2 style="font-family:var(--hd);font-weight:600;font-size:var(--t-title);line-height:1;margin:var(--gap-title) 0 0">Chatbot vs. AI agent</h2>
+        <p style="font-size:var(--t-body);margin:20px 0 0;max-width:1500px;color:var(--dim-d)">Two additions turn a responder into a doer.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--line-d);margin-top:28px;flex:1">
+          <div style="background:var(--panel);padding:32px 36px;display:flex;flex-direction:column">
+            <div style="font-family:var(--mo);font-size:var(--t-mono);letter-spacing:0.1em;color:var(--coral)">STANDARD CHATBOTS / PLAIN LLMS</div>
+            <div style="display:flex;flex-direction:column;gap:16px;margin-top:24px;font-size:22px;line-height:1.4;color:var(--dim-d)">
+              <span>Generate text in a single turn, then stop.</span>
+              <span>Cannot check email, search the web, book actions, or update a database.</span>
+            </div>
+          </div>
+          <div style="background:var(--panel);padding:32px 36px;display:flex;flex-direction:column">
+            <div style="font-family:var(--mo);font-size:var(--t-mono);letter-spacing:0.1em;color:var(--sky)">AI AGENTS</div>
+            <div style="font-size:19px;color:var(--muted-d);margin-top:22px">Formed by adding two capabilities to an LLM:</div>
+            <div style="display:flex;flex-direction:column;gap:16px;margin-top:16px;font-size:22px;line-height:1.4">
+              <span><b style="font-family:var(--hd);color:var(--sky)">Tool calling</b> <span style="color:var(--dim-d)">— the ability to take real-world actions.</span></span>
+              <span><b style="font-family:var(--hd);color:var(--sky)">The loop</b> <span style="color:var(--dim-d)">— operating step-by-step toward a goal, instead of stopping after one reply.</span></span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;margin-top:28px;flex-wrap:wrap;font-family:var(--mo);font-size:22px">
+          <div style="border:1px solid var(--line-d);padding:14px 20px;color:var(--dim-d)">LLM</div>
+          <span style="color:var(--muted-d)">+</span>
+          <div style="border:1px solid var(--line-d);padding:14px 20px;color:var(--dim-d)">tool calling</div>
+          <span style="color:var(--muted-d)">+</span>
+          <div style="border:1px solid var(--line-d);padding:14px 20px;color:var(--dim-d)">the loop</div>
+          <span style="color:var(--muted-d)">=</span>
+          <div style="border:1px solid var(--sky);background:var(--sky);color:var(--deep);padding:14px 20px">AI agent</div>
+        </div>
+      </section>
+
+      <section class="slide" data-label="Under-the-Hood Building Blocks" data-screen-label="04" style="background:var(--deep);color:var(--paper);font-family:var(--bd);display:flex;flex-direction:column;padding:var(--pad-top) var(--pad-x) var(--pad-bottom)">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mo);font-size:var(--t-mono);letter-spacing:0.12em;text-transform:uppercase;color:var(--muted-d)"><span>Concepts &middot; AI agents</span><span>04</span></div>
+        <h2 style="font-family:var(--hd);font-weight:600;font-size:var(--t-title);line-height:1;margin:var(--gap-title) 0 0">Under-the-hood building blocks</h2>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-top:34px;flex:1">
+          <div style="border-top:4px solid var(--sky);background:var(--panel);padding:26px 22px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-family:var(--hd);font-size:26px;font-weight:600">The Brain <span style="color:var(--muted-d);font-size:18px">(LLM)</span></div>
+            <div style="font-size:17px;color:var(--dim-d);line-height:1.4">Predicts the next token from training. No hands, no persistent memory, no capabilities of its own.</div>
+            <div style="margin-top:auto;border:1px solid var(--line-d);border-radius:6px;padding:12px 14px;font-family:var(--mo);font-size:13.5px;color:var(--dim-d);line-height:1.5">
+              <b style="color:var(--sky)">LLM (Model)</b><br>
+              &rarr; a large language model trained to predict the next token &mdash; nothing more on its own
+            </div>
+          </div>
+          <div style="border-top:4px solid var(--amber);background:var(--panel);padding:26px 22px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-family:var(--hd);font-size:26px;font-weight:600">The Hands <span style="color:var(--muted-d);font-size:18px">(tools &amp; harness)</span></div>
+            <div style="font-size:17px;color:var(--dim-d);line-height:1.4">The model outputs structured text naming a tool; the surrounding harness executes it for real and returns the result.</div>
+            <div style="margin-top:auto;border:1px solid var(--line-d);border-radius:6px;padding:12px 14px;font-family:var(--mo);font-size:13.5px;color:var(--dim-d);line-height:1.5">
+              <b style="color:var(--amber)">HARNESS (Runtime)</b><br>
+              &rarr; software that orchestrates the model: sends prompts, gets results, executes tool calls
+            </div>
+          </div>
+          <div style="border-top:4px solid var(--coral);background:var(--panel);padding:26px 22px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-family:var(--hd);font-size:26px;font-weight:600">Working Memory <span style="color:var(--muted-d);font-size:18px">(context)</span></div>
+            <div style="font-size:17px;color:var(--dim-d);line-height:1.4">Holds instructions, history, tool calls &amp; results. Limited even at 1M tokens, so it must be curated.</div>
+            <div style="margin-top:auto;border:1px solid var(--line-d);border-radius:6px;padding:12px 14px;font-family:var(--mo);font-size:13.5px;color:var(--dim-d);line-height:1.5">
+              <b style="color:var(--coral)">CONTEXT WINDOW</b><br>
+              &rarr; everything the model sees this call: instructions, history, tool calls &amp; results
+            </div>
+          </div>
+          <div style="border-top:4px solid var(--violet);background:var(--panel);padding:26px 22px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-family:var(--hd);font-size:26px;font-weight:600">Long-Term Memory <span style="color:var(--muted-d);font-size:18px">(RAG)</span></div>
+            <div style="font-size:17px;color:var(--dim-d);line-height:1.4">Facts embedded and stored in a vector database; RAG retrieves only what's relevant into context.</div>
+            <div style="margin-top:auto;border:1px solid var(--line-d);border-radius:6px;padding:12px 14px;font-family:var(--mo);font-size:13.5px;color:var(--dim-d);line-height:1.5">
+              <b style="color:var(--violet)">RAG (Retrieval)</b><br>
+              &rarr; embeds facts into a vector database, then retrieves only what's relevant into context
+            </div>
+          </div>
+          <div style="border-top:4px solid var(--mint);background:var(--panel);padding:26px 22px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-family:var(--hd);font-size:26px;font-weight:600">The Agentic Loop</div>
+            <div style="font-size:17px;color:var(--dim-d);line-height:1.4">Think, act, observe, repeat — until the goal is achieved or the agent gives up.</div>
+            <div style="margin-top:auto;border:1px solid var(--line-d);border-radius:6px;padding:12px 14px;font-family:var(--mo);font-size:13.5px;color:var(--dim-d);line-height:1.5">
+              <b style="color:var(--mint)">THE LOOP</b><br>
+              &rarr; think, act, observe, repeat &mdash; until the goal is met or the agent stops
+            </div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:60px;margin-top:28px;border-top:1px solid var(--line-d);padding-top:22px">
+          <div><div style="font-family:var(--mo);font-size:var(--t-mono);color:var(--muted-d)">SYSTEM PROMPT</div><div style="font-size:var(--t-small);margin-top:10px;line-height:1.35;color:var(--dim-d)">Sets behavior and rules for the whole session</div></div>
+          <div><div style="font-family:var(--mo);font-size:var(--t-mono);color:var(--muted-d)">USER MESSAGES</div><div style="font-size:var(--t-small);margin-top:10px;line-height:1.35;color:var(--dim-d)">The inputs — instructions, questions, tool results fed back in</div></div>
+          <div><div style="font-family:var(--mo);font-size:var(--t-mono);color:var(--muted-d)">ASSISTANT MESSAGES</div><div style="font-size:var(--t-small);margin-top:10px;line-height:1.35;color:var(--dim-d)">The model's own outputs — replies and tool calls</div></div>
+        </div>
+        <p style="font-family:var(--hd);font-size:var(--t-sub);margin:24px 0 0;font-weight:600">Five parts, one mechanism <span style="color:var(--sky)">&mdash; a model, a harness, and memory it doesn't have on its own</span></p>
+      </section>
+
+      <section class="slide" data-label="Subagent Frontmatter Fields" data-screen-label="05" style="background:var(--deep);color:var(--paper);font-family:var(--bd);display:flex;flex-direction:column;padding:var(--pad-top) var(--pad-x) var(--pad-bottom)">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mo);font-size:var(--t-mono);letter-spacing:0.12em;text-transform:uppercase;color:var(--muted-d)"><span>Hands-on &middot; Claude Code subagents</span><span>05</span></div>
+        <h2 style="font-family:var(--hd);font-weight:600;font-size:var(--t-title);line-height:1;margin:var(--gap-title) 0 0">Subagent frontmatter &mdash; supported fields</h2>
+        <p style="font-size:var(--t-body);margin:20px 0 0;max-width:1550px;color:var(--dim-d)">Every subagent is a Markdown file with YAML frontmatter. Two fields are required &mdash; the rest tune scope, model, and behavior.</p>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--line-d);margin-top:28px;flex:1">
+          <div style="background:var(--panel);padding:30px 34px;display:flex;flex-direction:column">
+            <div style="font-family:var(--mo);font-size:var(--t-mono);letter-spacing:0.1em;color:var(--sky)">REQUIRED &middot; EVERY SUBAGENT</div>
+            <div style="display:flex;flex-direction:column;gap:14px;margin-top:20px;font-size:18px;line-height:1.4;color:var(--dim-d)">
+              <span><span style="font-family:var(--mo);color:var(--sky)">name</span> &mdash; lowercase-with-hyphens id, used in @mentions and delegation</span>
+              <span><span style="font-family:var(--mo);color:var(--sky)">description</span> &mdash; when Claude should delegate here, written in third person</span>
+            </div>
+            <div style="border:1px solid var(--line-d);border-radius:6px;padding:16px 18px;margin-top:20px;font-family:var(--mo);font-size:13px;color:var(--dim-d);line-height:1.6">
+              <div style="color:var(--muted-d)">.claude/agents/qa-test-writer.md</div>
+              <div style="color:var(--muted-d);margin-top:6px">---</div>
+              <div><span style="color:var(--sky)">name:</span> qa-test-writer</div>
+              <div><span style="color:var(--sky)">description:</span> Use to draft or update</div>
+              <div>&nbsp;&nbsp;Playwright test specs from a plain-</div>
+              <div>&nbsp;&nbsp;English scenario&hellip;</div>
+              <div><span style="color:var(--sky)">tools:</span> Read, Write, Edit, Grep, Glob, Bash</div>
+              <div><span style="color:var(--sky)">model:</span> inherit</div>
+              <div style="color:var(--muted-d)">---</div>
+            </div>
+          </div>
+          <div style="background:var(--panel);padding:30px 34px">
+            <div style="font-family:var(--mo);font-size:var(--t-mono);letter-spacing:0.1em;color:var(--amber)">OPTIONAL &middot; TUNES SCOPE &amp; BEHAVIOR</div>
+            <div style="display:flex;flex-direction:column;gap:15px;margin-top:20px;font-size:17.5px;line-height:1.4;color:var(--dim-d)">
+              <span><span style="font-family:var(--mo);color:var(--amber)">tools:</span> Read, Write, Edit &mdash; allow-list; inherits everything if omitted</span>
+              <span><span style="font-family:var(--mo);color:var(--amber)">disallowedTools:</span> Bash(git push *) &mdash; removes specific tools even if inherited</span>
+              <span><span style="font-family:var(--mo);color:var(--amber)">model:</span> sonnet | opus | haiku | inherit &mdash; which model runs this subagent</span>
+              <span><span style="font-family:var(--mo);color:var(--amber)">permissionMode:</span> plan &mdash; default, plan, acceptEdits, bypassPermissions</span>
+              <span><span style="font-family:var(--mo);color:var(--amber)">color:</span> blue &mdash; highlight in the task list &amp; transcript</span>
+              <span><span style="font-family:var(--mo);color:var(--amber)">maxTurns:</span> 10 &mdash; caps agentic turns before stopping</span>
+            </div>
+          </div>
+        </div>
+
+        <p style="font-family:var(--hd);font-size:var(--t-sub);margin:28px 0 0;font-weight:600">Two required fields <span style="color:var(--sky)">&mdash; everything else, Claude Code will infer or inherit</span></p>
+      </section>
+
+      <section class="slide" data-label="Playwright Test Agents" data-screen-label="06" style="background:var(--deep);color:var(--paper);font-family:var(--bd);display:flex;flex-direction:column;padding:var(--pad-top) var(--pad-x) var(--pad-bottom)">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mo);font-size:var(--t-mono);letter-spacing:0.12em;text-transform:uppercase;color:var(--muted-d)"><span>Hands-on &middot; Playwright automation</span><span>06</span></div>
+        <h2 style="font-family:var(--hd);font-weight:600;font-size:var(--t-title);line-height:1;margin:var(--gap-title) 0 0">Playwright Test Agents</h2>
+        <p style="font-size:var(--t-body);margin:20px 0 0;max-width:1500px;color:var(--dim-d)">Three narrow roles, one file handed forward each time &mdash; Planner explores the live app, Generator writes verified code, Healer repairs what breaks.</p>
+
+        <div style="display:flex;align-items:center;gap:14px;margin-top:28px;font-family:var(--mo);font-size:22px">
+          <span style="color:var(--muted-d)">$</span>
+          <div style="border:1px solid var(--line-d);padding:14px 20px;color:var(--sky)">npx playwright init-agents --loop=claude</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:stretch;gap:0;margin-top:40px;flex:1">
+          <div style="background:var(--panel);border-top:4px solid var(--sky);padding:32px 30px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-family:var(--mo);font-size:18px;letter-spacing:0.08em;color:var(--sky)">@PLAYWRIGHT-TEST-PLANNER</div>
+            <div style="font-family:var(--hd);font-size:38px;font-weight:600;margin-top:2px">Planner</div>
+            <div style="font-size:19px;color:var(--dim-d);line-height:1.4;flex:1">Explores the live app over MCP from a user story, mapping the real flow before any code is written.</div>
+            <div style="font-family:var(--mo);font-size:16px;color:var(--muted-d);border-top:1px solid var(--line-d);padding-top:14px;margin-top:auto">writes &rarr; specs/*.md</div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;color:var(--muted-d);font-size:40px;padding:0 18px">&rarr;</div>
+          <div style="background:var(--panel);border-top:4px solid var(--amber);padding:32px 30px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-family:var(--mo);font-size:18px;letter-spacing:0.08em;color:var(--amber)">@PLAYWRIGHT-TEST-GENERATOR</div>
+            <div style="font-family:var(--hd);font-size:38px;font-weight:600;margin-top:2px">Generator</div>
+            <div style="font-size:19px;color:var(--dim-d);line-height:1.4;flex:1">Replays each planned step live in the browser, verifying selectors as it writes the spec.</div>
+            <div style="font-family:var(--mo);font-size:16px;color:var(--muted-d);border-top:1px solid var(--line-d);padding-top:14px;margin-top:auto">writes &rarr; tests/*.spec.ts</div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;color:var(--muted-d);font-size:40px;padding:0 18px">&rarr;</div>
+          <div style="background:var(--panel);border-top:4px solid var(--coral);padding:32px 30px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-family:var(--mo);font-size:18px;letter-spacing:0.08em;color:var(--coral)">@PLAYWRIGHT-TEST-HEALER</div>
+            <div style="font-family:var(--hd);font-size:38px;font-weight:600;margin-top:2px">Healer</div>
+            <div style="font-size:19px;color:var(--dim-d);line-height:1.4;flex:1">Replays a failing test, inspects the live UI, and patches the spec until it is green again.</div>
+            <div style="font-family:var(--mo);font-size:16px;color:var(--muted-d);border-top:1px solid var(--line-d);padding-top:14px;margin-top:auto">loops until green &#8635;</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:60px;margin-top:34px;border-top:1px solid var(--line-d);padding-top:24px">
+          <div><div style="font-family:var(--mo);font-size:var(--t-mono);color:var(--sky)">SEED STATE</div><div style="font-size:var(--t-small);margin-top:12px;line-height:1.35;color:var(--dim-d)"><span style="font-family:var(--mo)">tests/seed.spec.ts</span> sets the starting state every run replays from</div></div>
+          <div><div style="font-family:var(--mo);font-size:var(--t-mono);color:var(--sky)">LIVE CONTROL</div><div style="font-size:var(--t-small);margin-top:12px;line-height:1.35;color:var(--dim-d)"><span style="font-family:var(--mo)">.mcp.json</span> wires each agent to a real, running browser &mdash; not a guess</div></div>
+          <div><div style="font-family:var(--mo);font-size:var(--t-mono);color:var(--sky)">GIVES UP HONESTLY</div><div style="font-size:var(--t-small);margin-top:12px;line-height:1.35;color:var(--dim-d)">Unfixable after enough attempts &rarr; <span style="font-family:var(--mo)">test.fixme()</span> with an explanation, not a false pass</div></div>
+        </div>
+
+        <p style="font-family:var(--hd);font-size:var(--t-sub);margin:28px 0 0;font-weight:600">One narrow job per stage <span style="color:var(--sky)">&mdash; a file handed forward</span></p>
+      </section>
+
+      <section class="slide" data-label="Playwright Skill" data-screen-label="07" style="background:var(--deep);color:var(--paper);font-family:var(--bd);display:flex;flex-direction:column;padding:var(--pad-top) var(--pad-x) var(--pad-bottom)">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mo);font-size:var(--t-mono);letter-spacing:0.12em;text-transform:uppercase;color:var(--muted-d)"><span>Hands-on &middot; Playwright Skill</span><span>07</span></div>
+        <h2 style="font-family:var(--hd);font-weight:600;font-size:var(--t-title);line-height:1;margin:var(--gap-title) 0 0">The Playwright Skill &mdash; TestDino</h2>
+        <p style="font-size:var(--t-body);margin:20px 0 0;max-width:1550px;color:var(--dim-d)">70+ production-tested Markdown guides an agent loads on demand &mdash; Claude Code, Cursor, VS&nbsp;Code Copilot, and Gemini CLI all pull the right guide instead of guessing Playwright conventions.</p>
+        <div style="display:flex;align-items:center;gap:14px;margin-top:26px;font-family:var(--mo);font-size:22px">
+          <span style="color:var(--muted-d)">$</span>
+          <div style="border:1px solid var(--line-d);padding:14px 20px;color:var(--sky)">npx skills add testdino-hq/playwright-skill</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-top:32px;flex:1">
+          <div style="border-top:4px solid var(--sky);background:var(--panel);padding:26px 22px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-family:var(--mo);font-size:18px;letter-spacing:0.08em;color:var(--sky)">CORE &middot; 48</div>
+            <div style="font-family:var(--hd);font-size:26px;font-weight:600">core</div>
+            <div style="font-size:16px;color:var(--dim-d);line-height:1.4">Locators, assertions, fixtures, auth, API testing, network mocking, visual &amp; a11y</div>
+          </div>
+          <div style="border-top:4px solid var(--amber);background:var(--panel);padding:26px 22px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-family:var(--mo);font-size:18px;letter-spacing:0.08em;color:var(--amber)">CI &middot; 9</div>
+            <div style="font-family:var(--hd);font-size:26px;font-weight:600">ci</div>
+            <div style="font-size:16px;color:var(--dim-d);line-height:1.4">GitHub Actions, GitLab CI, CircleCI, Azure DevOps, Jenkins, Docker, sharding</div>
+          </div>
+          <div style="border-top:4px solid var(--coral);background:var(--panel);padding:26px 22px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-family:var(--mo);font-size:18px;letter-spacing:0.08em;color:var(--coral)">PLAYWRIGHT-CLI &middot; 10</div>
+            <div style="font-family:var(--hd);font-size:26px;font-weight:600">playwright-cli</div>
+            <div style="font-size:16px;color:var(--dim-d);line-height:1.4">CLI automation, tracing, screenshots, sessions, device emulation</div>
+          </div>
+          <div style="border-top:4px solid var(--violet);background:var(--panel);padding:26px 22px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-family:var(--mo);font-size:18px;letter-spacing:0.08em;color:var(--violet)">POM &middot; 2</div>
+            <div style="font-family:var(--hd);font-size:26px;font-weight:600">pom</div>
+            <div style="font-size:16px;color:var(--dim-d);line-height:1.4">Page Object Model vs. fixtures vs. helpers &mdash; when to use each</div>
+          </div>
+          <div style="border-top:4px solid var(--mint);background:var(--panel);padding:26px 22px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-family:var(--mo);font-size:18px;letter-spacing:0.08em;color:var(--mint)">MIGRATION &middot; 2</div>
+            <div style="font-family:var(--hd);font-size:26px;font-weight:600">migration</div>
+            <div style="font-size:16px;color:var(--dim-d);line-height:1.4">API mapping tables from Cypress and Selenium/WebDriver</div>
+          </div>
+        </div>
+        <p style="font-family:var(--hd);font-size:var(--t-sub);margin:28px 0 0;font-weight:600">70+ guides, five packs <span style="color:var(--sky)">&mdash; install one, or only what you need</span></p>
+      </section>
+
+      <section class="slide" data-label="Golden Rules &amp; Progressive Disclosure" data-screen-label="08" style="background:var(--deep);color:var(--paper);font-family:var(--bd);display:flex;flex-direction:column;padding:var(--pad-top) var(--pad-x) var(--pad-bottom)">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mo);font-size:var(--t-mono);letter-spacing:0.12em;text-transform:uppercase;color:var(--muted-d)"><span>Hands-on &middot; Playwright Skill</span><span>08</span></div>
+        <h2 style="font-family:var(--hd);font-weight:600;font-size:var(--t-title);line-height:1;margin:var(--gap-title) 0 0">Golden rules, in the generated code</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--line-d);margin-top:30px;flex:1">
+          <div style="background:var(--panel);padding:32px 36px">
+            <div style="font-family:var(--mo);font-size:var(--t-mono);letter-spacing:0.1em;color:var(--sky)">GOLDEN RULES &middot; EVERY GUIDE ASSUMES THESE</div>
+            <div style="display:flex;flex-direction:column;gap:16px;margin-top:24px;font-size:19px;line-height:1.4;color:var(--dim-d)">
+              <span><b style="color:var(--paper);font-family:var(--mo)">1</b> &nbsp;<span style="font-family:var(--mo);color:var(--sky)">getByRole()</span> over CSS/XPath &mdash; survives markup changes</span>
+              <span><b style="color:var(--paper);font-family:var(--mo)">2</b> &nbsp;Never <span style="font-family:var(--mo);color:var(--sky)">page.waitForTimeout()</span> &mdash; assert or <span style="font-family:var(--mo);color:var(--sky)">waitForURL()</span> instead</span>
+              <span><b style="color:var(--paper);font-family:var(--mo)">3</b> &nbsp;Web-first assertions that auto-retry</span>
+              <span><b style="color:var(--paper);font-family:var(--mo)">4</b> &nbsp;Isolate every test &mdash; no shared state</span>
+              <span><b style="color:var(--paper);font-family:var(--mo)">5</b> &nbsp;<span style="font-family:var(--mo);color:var(--sky)">baseURL</span> in config &mdash; no hardcoded URLs</span>
+              <span><b style="color:var(--paper);font-family:var(--mo)">6</b> &nbsp;Mock external services only, never your own app</span>
+            </div>
+          </div>
+          <div style="background:var(--panel);padding:32px 36px;display:flex;flex-direction:column">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;flex:1">
+              <div style="border:1px solid var(--line-d);background:var(--deep);border-radius:4px;padding:20px;display:flex;flex-direction:column">
+                <div style="font-family:var(--mo);font-size:16px;letter-spacing:0.08em;color:var(--coral)">NAIVE</div>
+                <pre style="font-family:var(--mo);font-size:15px;color:var(--dim-d);line-height:1.7;margin:16px 0 0;white-space:pre-wrap">page.click(
+  'div.button-class');
+page.fill(
+  'input[name="email"]',
+  'user@test.com');</pre>
+              </div>
+              <div style="border:1px solid var(--sky);background:var(--deep);border-radius:4px;padding:20px;display:flex;flex-direction:column">
+                <div style="font-family:var(--mo);font-size:16px;letter-spacing:0.08em;color:var(--sky)">WITH THE SKILL LOADED</div>
+                <pre style="font-family:var(--mo);font-size:15px;color:var(--sky-3);line-height:1.7;margin:16px 0 0;white-space:pre-wrap">page.getByRole('button',
+  { name: 'Submit' })
+  .click();
+page.getByLabel('Email')
+  .fill('user@test.com');</pre>
+              </div>
+            </div>
+            <div style="margin-top:20px;font-size:16px;color:var(--muted-d);line-height:1.4">Semantic locators survive markup refactors &mdash; the naive version breaks the moment a class name changes.</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:60px;margin-top:28px;border-top:1px solid var(--line-d);padding-top:22px">
+          <div><div style="font-family:var(--mo);font-size:var(--t-mono);color:var(--amber)">IDLE</div><div style="font-size:var(--t-small);margin-top:10px;line-height:1.35;color:var(--dim-d)">Pack name only &mdash; under 100 tokens</div></div>
+          <div><div style="font-family:var(--mo);font-size:var(--t-mono);color:var(--amber)">ACTIVATED</div><div style="font-size:var(--t-small);margin-top:10px;line-height:1.35;color:var(--dim-d)">Index + golden rules &mdash; 150&ndash;2,600 tokens</div></div>
+          <div><div style="font-family:var(--mo);font-size:var(--t-mono);color:var(--amber)">REFERENCE</div><div style="font-size:var(--t-small);margin-top:10px;line-height:1.35;color:var(--dim-d)">One guide loaded on demand &mdash; 2,500&ndash;15,000 tokens</div></div>
+        </div>
+        <p style="font-family:var(--hd);font-size:var(--t-sub);margin:24px 0 0;font-weight:600">Guidance loads <span style="color:var(--sky)">only when the task needs it</span></p>
+      </section>
+
+    </div>
+  </div>
+
+  <button id="prev-btn" class="nav-btn" type="button" aria-label="Previous slide">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <button id="next-btn" class="nav-btn" type="button" aria-label="Next slide">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <div id="dots" role="tablist" aria-label="Slides"></div>
+  <div id="hint">Use &larr; &rarr; arrow keys to navigate</div>
+</div>
+
+<script>
+(function () {
+  var stage = document.getElementById('stage');
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var prevBtn = document.getElementById('prev-btn');
+  var nextBtn = document.getElementById('next-btn');
+  var dotsWrap = document.getElementById('dots');
+  var hint = document.getElementById('hint');
+  var current = 0;
+
+  slides.forEach(function (_, i) {
+    var dot = document.createElement('button');
+    dot.className = 'dot';
+    dot.type = 'button';
+    dot.setAttribute('role', 'tab');
+    dot.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+    dot.addEventListener('click', function () { goTo(i); });
+    dotsWrap.appendChild(dot);
+  });
+  var dots = Array.prototype.slice.call(dotsWrap.children);
+
+  function render() {
+    slides.forEach(function (s, i) { s.classList.toggle('is-active', i === current); });
+    dots.forEach(function (d, i) { d.classList.toggle('is-active', i === current); });
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === slides.length - 1;
+  }
+
+  function goTo(i) {
+    current = Math.max(0, Math.min(slides.length - 1, i));
+    render();
+  }
+  function next() { goTo(current + 1); }
+  function prev() { goTo(current - 1); }
+
+  prevBtn.addEventListener('click', prev);
+  nextBtn.addEventListener('click', next);
+
+  window.addEventListener('keydown', function (e) {
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+    else if (e.key === 'End') { e.preventDefault(); goTo(slides.length - 1); }
+  });
+
+  var touchStartX = null;
+  window.addEventListener('touchstart', function (e) { touchStartX = e.changedTouches[0].clientX; }, { passive: true });
+  window.addEventListener('touchend', function (e) {
+    if (touchStartX === null) return;
+    var dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) { dx < 0 ? next() : prev(); }
+    touchStartX = null;
+  }, { passive: true });
+
+  function fit() {
+    var scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    stage.style.transform = 'scale(' + scale + ')';
+  }
+  window.addEventListener('resize', fit);
+  fit();
+  render();
+
+  setTimeout(function () { hint.classList.add('is-shown'); }, 400);
+  setTimeout(function () { hint.classList.remove('is-shown'); }, 4500);
+})();
+</script>
+</body>
+</html>
